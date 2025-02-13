@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import router from "./routes/customer-route";
 // import { Request } from "express";
 // import rateLimit from "express-rate-limit";
 // import helmet from "helmet";
@@ -10,7 +11,7 @@ app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({extended:true}));
 app.use(cors({
-    origin:"*",
+    origin:["http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: [
         "Content-Type",
@@ -69,4 +70,8 @@ app.use(cors({
 //     // Simulate a database lookup
 //     return apiKey ? `user-${apiKey}` : "default-user";
 //   }
+app.use('/api/v1',router)
+app.use("/api", (req, res) => {
+  res.status(200).json({ success: true });
+});
 export default app;

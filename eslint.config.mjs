@@ -6,6 +6,10 @@ import tsParser from "@typescript-eslint/parser";
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   {
+    env: {
+      node: true,  // Enables Node.js global variables like `process`
+      es6: true,
+    },
     files: ["**/*.{js,mjs,cjs,ts}"],
     languageOptions: {
       parser: tsParser,

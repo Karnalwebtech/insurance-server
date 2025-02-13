@@ -1,5 +1,5 @@
-import ErrorHandler from "@/utils/errorHandler";
 import { Request, Response, NextFunction } from "express";
+import ErrorHandler from "../utils/errorHandler";
 
 export const isAuthenticatedUser = async (req: Request, res: Response, next: NextFunction) => {
     const token: string | undefined = req.headers.authorization;
