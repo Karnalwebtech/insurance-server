@@ -6,9 +6,9 @@ export interface ICustomer extends Document {
     fullname: string;
     policy_no: string;
     phone: number;
-    dop: Date;
-    dor: Date;
-    issue_policy_year: Date;
+    dop: string;
+    dor: string;
+    issue_policy_year: string;
     si: string;
     amount: number;
     email: string;
@@ -30,9 +30,9 @@ const customerSchema: Schema<ICustomer> = new mongoose.Schema(
         fullname: { type: String, default: null },
         policy_no: { type: String, default: null },
         phone: { type: Number, default: null },
-        dop: { type: Date, default: null },
-        dor: { type: Date, default: null },
-        issue_policy_year: { type: Date, default: null },
+        dop: { type: String, default: null },
+        dor: { type: String, default: null },
+        issue_policy_year: { type: String, default: null },
         si: { type: String, default: null },
         amount: { type: Number, default: 0 },
         email: { type: String, default: null }, // Fixed 'string' to 'String'

@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import router from "./routes/customer-route";
+import errorMiddleware from "./middlewares/error";
 // import { Request } from "express";
 // import rateLimit from "express-rate-limit";
 // import helmet from "helmet";
@@ -17,7 +18,7 @@ app.use(cors({
         "Content-Type",
         "Authorization",
         "cookies",
-        "X-CSRF-Token",
+        "X-CSRF-Token","x-api-key",
       ],
       credentials: true,
       maxAge: 600,
@@ -71,7 +72,5 @@ app.use(cors({
 //     return apiKey ? `user-${apiKey}` : "default-user";
 //   }
 app.use('/api/v1',router)
-app.use("/api", (req, res) => {
-  res.status(200).json({ success: true });
-});
+app.use(errorMiddleware);
 export default app;

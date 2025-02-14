@@ -1,44 +1,47 @@
 import { Request, Response, NextFunction } from "express";
 import ErrorHandler from "../utils/errorHandler";
+import {  User } from "../model/user.model";
+import { decryptValue } from "../utils/cryptoChanger";
+
 
 export const isAuthenticatedUser = async (req: Request, res: Response, next: NextFunction) => {
-    const token: string | undefined = req.headers.authorization;
-    if (!token) {
+    const authorization: string | undefined = req.headers.authorization?.split(" ")[1] || "";
+    const apikey: string = (req.headers["x-api-key"] as string) || "";
+    if (!authorization) {
         return next(new ErrorHandler("Please log in first", 400));
     }
+
     try {
-        // const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-        //     id: string;
-        // };
+        const token = await decryptValue(authorization)
+        const decodeapikey = await decryptValue(apikey)
+        const user = await User.findOne({ "email": token })
+        if (!user) {
+            return next(new ErrorHandler("You are not authorization", 404));
+        }
 
-        // const user = await User.findById(decoded.id);
-        // if (!user) {
-        //     return next(new ErrorHandler("User not found", 404));
-        // }
-
-        // (req as any).user = user;
+        req.user = user;
+        if (!apikey) {
+            return next(new ErrorHandler("Api key is missing", 404));
+        }
+        if (decodeapikey !== process.env.API_KEY!) {
+            return next(new ErrorHandler("Api key is not valid", 404));
+        }
         next();
     }
     catch (error) {
-        // if (error instanceof jwt.TokenExpiredError) {
-        //     return next(new ErrorHandler("Token expired. Please log in again.", 401));
-        // } else {
         return next(new ErrorHandler(`Invalid token. Please log in again. ${error}`, 401));
-        // }
     }
 }
 export const authorizeRoles = (...roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        console.log(roles)
-        // if (!req.user || !roles.includes(req.user.role)) {
-        //     return next(
-        //       new ErrorHandler(
-        //         `Role: ${req.user?.role} is not allowed to access this resource`,
-        //         403
-        //       )
-        //     );
-        //   }
-
+        if (!req.user || !roles.includes(req.user.role)) {
+            return next(
+              new ErrorHandler(
+                `Role: ${req.user?.role} is not allowed to access this resource`,
+                403
+              )
+            );
+          }
         next();
     }
 }
