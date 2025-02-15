@@ -12,24 +12,14 @@ declare global {
 
 export const isAuthenticatedUser = async (req: Request, res: Response, next: NextFunction) => {
     const authorization: string | undefined = req.headers.authorization?.split(" ")[1] || "";
-    const apikey: string = (req.headers["x-api-key"] as string) || "";
     if (!authorization) {
         return next(new ErrorHandler("Please log in first", 400));
     }
-
     try {
         const token = await decryptValue(authorization)
-        const decodeapikey = await decryptValue(apikey)
         const user = await User.findOne({ "email": token })
         if (!user) {
             return next(new ErrorHandler("You are not authorization", 404));
-        }
-
-        if (!apikey) {
-            return next(new ErrorHandler("Api key is missing", 404));
-        }
-        if (decodeapikey !== process.env.API_KEY!) {
-            return next(new ErrorHandler("Api key is not valid", 404));
         }
         req.user = user;
         next();
@@ -37,6 +27,21 @@ export const isAuthenticatedUser = async (req: Request, res: Response, next: Nex
     catch (error) {
         return next(new ErrorHandler(`Invalid token. Please log in again. ${error}`, 401));
     }
+}
+
+export const secureApi = async (req: Request, res: Response, next: NextFunction) => {
+  const apikey: string = (req.headers["x-api-key"] as string) || "";
+
+  try {
+      const decodeapikey = await decryptValue(apikey)
+      if (decodeapikey !== process.env.API_KEY!) {
+          return next(new ErrorHandler("Api key is not valid", 404));
+      }
+      next();
+  }
+  catch (error) {
+      return next(new ErrorHandler(`Invalid token. Please log in again. ${error}`, 401));
+  }
 }
 export const authorizeRoles = (...roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {

@@ -38,10 +38,20 @@ export const addCustomerController = async (req: Request, res: Response, next: N
 };
 
 export const allCustomers = async (req: Request, res: Response, next: NextFunction) => {
-    const query = req.query;
-    const resultPerPage = Number(query.rowsPerPage) || 10;
     try {
-        const apifeature = new ApiFeatures(CustomerModel.find(), query)
+        const query = req.query;
+        const user = req.user?._id;
+        // Initialize ApiFeatures without pagination
+        const apifeature = new ApiFeatures(CustomerModel.find({ is_active: true, user }), query);
+        apifeature.search().filter();
+
+        // Get the count of filtered results (without pagination)
+        const datacounter = await apifeature.getQuery().length;
+
+        // Apply pagination after getting the count
+        apifeature.pagination(parseInt(query.rowsPerPage as string, 10) || 10);
+
+        // Fetch filtered and paginated results
         const result = await apifeature.getQuery()
             .populate([
                 { path: "user", model: "User" },
@@ -50,17 +60,57 @@ export const allCustomers = async (req: Request, res: Response, next: NextFuncti
                 { path: "document", model: "File" },
                 { path: "profile_image", model: "File" },
             ])
-            .sort({ _id: -1 }) 
+            .sort({ _id: -1 })
             .exec();
+
         res.status(200).json({
             success: true,
-            result: result,
-            dataCounter:result.length,
-            resultPerPage,
-        })
+            result,
+            dataCounter: datacounter,  // Correct count of filtered/search results
+        });
+    } catch (err) {
+        next(new ErrorHandler(`Server error: ${err instanceof Error ? err.message : "Unknown error"}`, 500));
+    }
+};
+
+export const removeCustomer = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const result = await CustomerModel.findOne({ id })
+        if (!result) {
+            return next(new ErrorHandler("Customer id not found", 404));
+        }
+        result.is_active = false;
+        await result.save();
+        console.log(result)
+        res.status(200).json({
+            success: true,
+            message: `${result.id} succesfuly removed`
+        });
     }
     catch (err) {
-        next(new ErrorHandler(`Server error: ${err}`, 500)); // Pass error to middleware
-    }
+        next(new ErrorHandler(`Server error: ${err instanceof Error ? err.message : "Unknown error"}`, 500));
 
+    }
+}
+
+export const customerDetails = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return next(new ErrorHandler("Not found any valid id", 404))
+        }
+        const result = await CustomerModel.findOne({ id });
+        if (!result) {
+            return next(new ErrorHandler("Customer not found", 404))
+        }
+        res.status(200).json({
+            success: true,
+            result,
+        })
+
+    }
+    catch (err) {
+        next(new ErrorHandler(`Server error: ${err instanceof Error ? err.message : "Unknown error"}`, 500));
+    }
 }
