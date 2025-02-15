@@ -39,7 +39,7 @@ export const addCustomerController = async (req: Request, res: Response, next: N
 
 export const allCustomers = async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
-    const resultPerPage = 10;
+    const resultPerPage = Number(query.rowsPerPage) || 10;
     try {
         const apifeature = new ApiFeatures(CustomerModel.find(), query)
         const result = await apifeature.getQuery()
@@ -50,11 +50,13 @@ export const allCustomers = async (req: Request, res: Response, next: NextFuncti
                 { path: "document", model: "File" },
                 { path: "profile_image", model: "File" },
             ])
-            .sort({ updated_at: -1 })
+            .sort({ _id: -1 }) 
             .exec();
         res.status(200).json({
             success: true,
-            result: result
+            result: result,
+            dataCounter:result.length,
+            resultPerPage,
         })
     }
     catch (err) {
