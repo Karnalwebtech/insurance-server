@@ -1,8 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import ErrorHandler from "../utils/errorHandler";
-import {  User } from "../model/user.model";
+import {  IUser, User } from "../model/user.model";
 import { decryptValue } from "../utils/cryptoChanger";
-
+declare global {
+    namespace Express {
+      interface Request {
+        user?: IUser;
+      }
+    }
+  }
 
 export const isAuthenticatedUser = async (req: Request, res: Response, next: NextFunction) => {
     const authorization: string | undefined = req.headers.authorization?.split(" ")[1] || "";
@@ -19,13 +25,13 @@ export const isAuthenticatedUser = async (req: Request, res: Response, next: Nex
             return next(new ErrorHandler("You are not authorization", 404));
         }
 
-        req.user = user;
         if (!apikey) {
             return next(new ErrorHandler("Api key is missing", 404));
         }
         if (decodeapikey !== process.env.API_KEY!) {
             return next(new ErrorHandler("Api key is not valid", 404));
         }
+        req.user = user;
         next();
     }
     catch (error) {

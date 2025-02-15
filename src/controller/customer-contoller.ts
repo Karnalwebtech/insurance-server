@@ -4,14 +4,11 @@ import fileHandler from "../service/file-handler";
 import CustomerModel from "../model/customer.model";
 import uuidGenerator from "../utils/uuidGenrator";
 import { IUser } from "../model/user.model";
+import ApiFeatures from "../utils/apiFeatuers";
 
 export const addCustomerController = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user: IUser | undefined = req.user;
-    const t = false
-    if(!t){
-        return next(new ErrorHandler("Test error", 404))
-    }
         if (!user) {
             return next(new ErrorHandler("User not found", 404))
         }
@@ -31,7 +28,7 @@ export const addCustomerController = async (req: Request, res: Response, next: N
             user: user._id,
             fullname, policy_no, phone, dop, dor, issue_policy_year, si, amount, email, category, health_conditions: healthConditions
         })
-        res.status(200).json({
+        res.status(201).json({
             success: true,
             message: "Customer added successfully",
         });
@@ -39,3 +36,29 @@ export const addCustomerController = async (req: Request, res: Response, next: N
         next(new ErrorHandler(`Server error: ${err}`, 500)); // Pass error to middleware
     }
 };
+
+export const allCustomers = async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const resultPerPage = 10;
+    try {
+        const apifeature = new ApiFeatures(CustomerModel.find(), query)
+        const result = await apifeature.getQuery()
+            .populate([
+                { path: "user", model: "User" },
+                { path: "addhar_card", model: "File" },
+                { path: "pan_card", model: "File" },
+                { path: "document", model: "File" },
+                { path: "profile_image", model: "File" },
+            ])
+            .sort({ updated_at: -1 })
+            .exec();
+        res.status(200).json({
+            success: true,
+            result: result
+        })
+    }
+    catch (err) {
+        next(new ErrorHandler(`Server error: ${err}`, 500)); // Pass error to middleware
+    }
+
+}
